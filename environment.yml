@@ -1,0 +1,31 @@
+name: capstone-rag
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.10
+  - pip
+  - numpy==1.26.4
+  - pandas==2.2.2
+  - scikit-learn==1.4.2
+  - numba==0.58.1
+  - streamlit==1.33.0
+  - matplotlib==3.9.2
+  - tqdm==4.66.5
+  - python-dotenv==1.0.1
+  - pip:
+      - langchain==0.3.6
+      - langchain-core==0.3.13
+      - langchain-openai==0.3.2
+      - langchain-qdrant==0.2.1
+      - langchain-huggingface==0.1.2
+      - qdrant-client==1.11.3
+      - sentence-transformers==3.0.1
+      - openai==1.43.0
+      - tiktoken==0.7.0
+      - fastapi==0.115.0
+      - uvicorn==0.30.5
+      - beautifulsoup4==4.12.3
+      - python-docx==1.1.2
+      - reportlab==4.2.2
