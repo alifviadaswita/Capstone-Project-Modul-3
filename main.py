@@ -1,3 +1,4 @@
+# 📂 Blok 1: Import Library
 import os, re, pandas as pd
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 
 
-# Load environment variables
+# 🔑 Blok 2: Load Environment Variables
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 QDRANT_URL = os.getenv("QDRANT_URL")
@@ -26,10 +27,10 @@ if not all([OPENAI_API_KEY, QDRANT_URL, QDRANT_API_KEY]):
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
 
-# Initialize embeddings model
+# 🧠 Blok 3: Inisialisasi Model Embedding
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
-# Load dataset
+# 📑 Blok 4: Load Dataset
 print("📂 Loading Resume dataset...")
 data_path = "Dataset/RESUME/Resume.csv"
 if not os.path.exists(data_path):
@@ -40,7 +41,7 @@ data = df.dropna(subset=['ID']).reset_index(drop=True)
 data = data.drop_duplicates(subset=['ID']).reset_index(drop=True)
 
 
-# Data cleaning
+# 🧹 Blok 5: Data cleaning
 required_cols = ["ID", "Resume_str", "Category"]
 missing = [c for c in required_cols if c not in data.columns]
 if missing:
@@ -63,7 +64,7 @@ clean_data.to_csv(output_path, index=False, encoding="utf-8")
 print(f"✅ Data cleaned and saved to: {output_path}")
 
 
-# Convert rows into LangChain Documents
+# 📄 Blok 6: Convert rows into LangChain Documents
 documents = []
 for i, row in clean_data.iterrows():
     content = f"{row['Resume_str']}\n\nCategory: {row['Category']}"
@@ -80,7 +81,7 @@ if len(documents) == 0:
     raise ValueError("No documents available for indexing. Please check the cleaning process.")
 
 
-# Connect to Qdrant
+# 🔗 Blok 7:  Connect to Qdrant
 collection_name = "resume_documents"
 
 print("🔗 Connecting to Qdrant Cloud...")
@@ -105,7 +106,7 @@ client.create_collection(
 print(f"✅ Collection '{collection_name}' created (dimension: 1536).")
 
 
-# Index embeddings into Qdrant
+#🚀 Blok 8:  Index embeddings into Qdrant
 print("🚀 Indexing documents into Qdrant (this may take a few minutes)...")
 vector_store = QdrantVectorStore.from_documents(
     documents=documents,
@@ -119,17 +120,15 @@ vector_store = QdrantVectorStore.from_documents(
 )
 print("✅ Documents successfully uploaded to Qdrant!")
 
-
+# 🧭 Blok 9: Create Payload Index
 try:
     client.create_payload_index(
         collection_name=collection_name,
         field_name="category",
         field_schema="keyword"
     )
-    # print("✅ Index for field 'Category' created successfully.")
 except Exception as e:
-    # print(f"⚠️ Failed to create index for 'Category': {str(e)}")
-
+    
     # Verify collection info
     collection_info = client.get_collection(collection_name)
     print(f"\n📊 Collection Statistics:")

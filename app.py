@@ -1,3 +1,4 @@
+#⚙️ Blok 1: Import Library 
 import os
 import streamlit as st   
 import pandas as pd  
@@ -17,7 +18,7 @@ st.set_page_config(
     page_icon="🧾",
     layout="wide"
 )
-# Load API keys
+# 🔐 Blok 2: Load API keys
 try:
     OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
     QDRANT_URL = st.secrets["QDRANT_URL"]
@@ -33,7 +34,7 @@ if not all([OPENAI_API_KEY, QDRANT_URL, QDRANT_API_KEY]):
     st.stop()
 
 
-# Initialize LLM 
+# 🧠 Blok 3:  Initialize LLM 
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=OPENAI_API_KEY,
@@ -49,7 +50,7 @@ def load_embeddings():
 
 embeddings = load_embeddings()
 
-# Initialize Qdrant Vector Store
+# 🗃️ Blok 4:  Initialize Qdrant Vector Store
 @st.cache_resource
 def load_qdrant():
     try:
@@ -79,7 +80,7 @@ def _clean_category(value: str) -> str:
         return ""
     return str(value).strip().lower()
 
-# Define RAG Tools
+# 🧩 Blok 5: Define RAG Tools
 # 1️⃣ Searh resume by Category
 @tool
 def search_resumes_by_category(category: str):
@@ -151,7 +152,7 @@ def search_resumes_by_category_and_query(category: str, query: str):
         } for doc in results
     ]
 
-# 3️⃣ Search resumes by Category + query (filtered)
+# 4️⃣ Search resumes by Prompt
 @tool
 def get_resume_by_prompt(query_prompt: str):
     """Get the most relevant resume for a given query prompt."""
@@ -170,7 +171,7 @@ def get_resume_by_prompt(query_prompt: str):
         "Resume": (doc.page_content[:1000] + "...") if doc.page_content else ""
     }
 
-# 3️⃣ Search resumes by Category + query (filtered)
+# 5️⃣ Search resumes similar candidates
 @tool
 def recommend_similar_candidates(query_prompt: str):
     """Recommend similar candidates based on a query prompt."""
@@ -198,7 +199,7 @@ tools = [
     recommend_similar_candidates
 ]
 
-# 🧩 AGENT CREATION
+# 🧠 Blok 6: 🧩 AGENT CREATION
 def create_agent_prompt():
     return """
 Anda adalah **Resume Intelligence Agent**, asisten ahli yang dirancang untuk menjawab pertanyaan tentang kandidat kerja berdasarkan dokumen resume yang disimpan di database vektor Qdrant.
@@ -239,7 +240,7 @@ ResumeRetriever.search(query="data scientist python", top_k=3)
 
 Gunakan prompt ini sebagai pedoman perilaku agen setiap kali menjawab pertanyaan tentang kandidat.
 """
-
+#💬 Blok 7: Function resume expert
 def resume_expert(question: str):
     """Process user query with agent"""
     agent = create_agent(
@@ -299,7 +300,7 @@ def resume_expert(question: str):
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
-# Streamlit UI
+# 🧭 Blok 8: Streamlit UI
 st.title("🧠 RESUME Recommendation Agent")
 st.markdown("AI-powered resume recommendation using RAG Agent")
 
