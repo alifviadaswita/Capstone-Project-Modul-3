@@ -1,8 +1,8 @@
 import os
-import streamlit as st   # type: ignore
-import pandas as pd   # type: ignore
+import streamlit as st   
+import pandas as pd  
 from datetime import datetime
-from dotenv import load_dotenv # pyright: ignore[reportMissingImports]
+from dotenv import load_dotenv 
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings  
 from langchain_qdrant import QdrantVectorStore  
@@ -151,6 +151,7 @@ def search_resumes_by_category_and_query(category: str, query: str):
         } for doc in results
     ]
 
+# 3️⃣ Search resumes by Category + query (filtered)
 @tool
 def get_resume_by_prompt(query_prompt: str):
     """Get the most relevant resume for a given query prompt."""
@@ -169,6 +170,7 @@ def get_resume_by_prompt(query_prompt: str):
         "Resume": (doc.page_content[:1000] + "...") if doc.page_content else ""
     }
 
+# 3️⃣ Search resumes by Category + query (filtered)
 @tool
 def recommend_similar_candidates(query_prompt: str):
     """Recommend similar candidates based on a query prompt."""
@@ -197,37 +199,6 @@ tools = [
 ]
 
 # 🧩 AGENT CREATION
-# def create_agent_prompt():
-#     return """
-# You are **Resume Intelligence Agent**, an expert assistant designed to answer questions about job candidates based on their resume documents stored in the Qdrant vector database.
-
-# 🎯 **Objective:**
-# Provide accurate, concise, and evidence-based answers derived from the most relevant resumes.
-
-# 🧩 **Information Source:**
-# You have access to a tool called **"Resume Retriever"** that allows you to search and extract factual information from candidate resumes.
-# Use this tool whenever you need data from resumes (e.g., work experience, education, certifications, or skills).
-
-# 🧭 **Reasoning Process:**
-# 1. First, analyze the user’s question carefully.  
-# 2. Determine if you need to retrieve resume information using the "Resume Retriever" tool.  
-# 3. If yes, call the tool with appropriate keywords (e.g., job title, department, or skills).  
-# 4. Summarize and synthesize retrieved resume data into a clear, factual answer.  
-# 5. If the question is unrelated to the resume content, politely state that the information is not available.
-
-# 🧾 **Output Format:**
-# Your response must follow this structure:
-# - **Main Answer:** concise and factual explanation (maximum 5 sentences)
-# - **Key Summary:** bullet points of main skills, roles, or experiences
-# - **Sources:** candidate IDs and categories used (if available)
-
-# 🧠 **Additional Rules:**
-# - Do NOT invent or assume information beyond what is found in resumes.  
-# - Base all answers strictly on retrieved data.  
-# - If the requested information is not found in any resume, respond clearly that the data is not available.  
-# - Maintain a professional, helpful, and factual tone at all times.
-# """
-
 def create_agent_prompt():
     return """
 Anda adalah **Resume Intelligence Agent**, asisten ahli yang dirancang untuk menjawab pertanyaan tentang kandidat kerja berdasarkan dokumen resume yang disimpan di database vektor Qdrant.
@@ -278,16 +249,14 @@ def resume_expert(question: str):
     )
 
     try:
-        # create input in agent-friendly format
         result = agent.invoke({"messages": [HumanMessage(content=question)]})
-        # result structure may vary; try to extract answer robustly
         messages = result.get("messages", []) if isinstance(result, dict) else getattr(result, "messages", [])
         if not messages:
             answer_text = str(result)
         else:
             answer_text = messages[-1].content
 
-        # Calculate token usage (best-effort)
+        # Calculate token usage 
         total_input_tokens = 0
         total_output_tokens = 0
         for message in messages:
@@ -331,7 +300,6 @@ def resume_expert(question: str):
         }
 
 # Streamlit UI
-
 st.title("🧠 RESUME Recommendation Agent")
 st.markdown("AI-powered resume recommendation using RAG Agent")
 

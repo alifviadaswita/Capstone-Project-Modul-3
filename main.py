@@ -47,10 +47,10 @@ if missing:
     raise ValueError(f"❌ Missing required columns in dataset: {missing}")
 
 def clean_text(text):
-    text = BeautifulSoup(str(text), "html.parser").get_text(separator=" ")  # Remove HTML tags
-    text = text.lower()  # Convert to lowercase
-    text = re.sub(r'[^a-z0-9.,!?%&()\-+\s]', ' ', text)  # Remove unwanted characters but keep basic punctuation
-    text = re.sub(r'\s+', ' ', text).strip()  # Remove extra spaces
+    text = BeautifulSoup(str(text), "html.parser").get_text(separator=" ")  
+    text = text.lower()  
+    text = re.sub(r'[^a-z0-9.,!?%&()\-+\s]', ' ', text) 
+    text = re.sub(r'\s+', ' ', text).strip()  
     return text
 
 # Create cleaned version
@@ -90,7 +90,7 @@ client = QdrantClient(
     prefer_grpc=False
 )
 
-# Delete old collection if it exists
+# Delete old collection 
 try:
     client.delete_collection(collection_name)
     print(f"⚠️ Old collection '{collection_name}' deleted.")
@@ -120,7 +120,6 @@ vector_store = QdrantVectorStore.from_documents(
 print("✅ Documents successfully uploaded to Qdrant!")
 
 
-# Create an index for Category filter
 try:
     client.create_payload_index(
         collection_name=collection_name,
