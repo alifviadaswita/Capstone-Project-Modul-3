@@ -83,29 +83,39 @@ retriever = qdrant.as_retriever(search_kwargs={"k": 20})
 # 🧩 Blok 5: Define RAG Tools
 # ✅ 1️⃣ Search resumes by query (category / skills / general prompt)
 @tool
-def search_resumes_by_query(query: str, category: str = None, k: int = 10):
+def search_resumes_by_query(query: str, skills: str = None, category: str = None, k: int = 10):
     """
     Cari resume berdasarkan query. Jika category diberikan, filter dengan menambahkan kata kunci.
     Return: list of dict atau dict {"error": "..."}
     """
     try:
-        q = f"{query} in {category}" if category else query
-        results = qdrant.similarity_search(query=q, k=k)
+        search_text = query.strip()
+        if skills:
+            search_text += f" {skills.strip()}"
+        if category:
+            search_text += f" in {category.strip()}"
+
+        if not search_text:
+            return {"error": "Query tidak boleh kosong."}
+
+        results = qdrant.similarity_search_with_score(search_text, k=k)
+
+        if not results:
+            return f"Tidak ada hasil ditemukan untuk '{search_text}'."
+
+        output = []
+        for doc, score in results:
+            output.append({
+                "ID": doc.metadata.get("id", "-"),
+                "Category": doc.metadata.get("category", "Tidak diketahui"),
+                "Snippet": (doc.page_content[:350] + "...") if doc.page_content else "(Tidak ada konten)",
+                "RelevanceScore": round(float(score), 4)
+            })
+
+        return output
 
     except Exception as e:
-        return {"error": str(e)}
-
-    if not results:
-        return f"Tidak ada data untuk kategori '{category}'."   
-    
-    out = []
-    for doc in results:
-        out.append({
-            "ID": doc.metadata.get("id"),
-            "Category": doc.metadata.get("category"),
-            "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
-        })
-    return out
+        return {"error": f"Terjadi kesalahan: {str(e)}"}
 
 # ✅ 2️⃣ Recommend similar candidates
 @tool
@@ -146,8 +156,7 @@ def get_resume_by_id(id: str):
         return {
             "ID": doc.metadata.get("id"),
             "Category": doc.metadata.get("category"),
-            "Resume": (doc.page_content[:1500] + "..."),
-            "RelevanceScore": 1.0
+            "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
         }
 
     except Exception as e:
