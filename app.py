@@ -190,7 +190,7 @@ def recommend_similar_candidates(query_prompt: str):
             "Category": doc.metadata.get("Category"),
             "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
         } for doc in results
-    ]
+    ] 
 
 # 6️⃣ Get Resume by ID
 @tool
