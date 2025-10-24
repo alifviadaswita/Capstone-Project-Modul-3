@@ -132,27 +132,108 @@ for field in ["category", "id"]:
     except Exception as e:
         print(f"⚠️ Could not create index for '{field}': {e}")
 
+# 🧩 Blok 10: Verify & Auto-Repair Indexes
+def verify_and_fix_indexes(client: QdrantClient, collection_name: str):
+    """Verifikasi dan perbaiki index penting ('id' dan 'category') jika tidak ada atau rusak."""
+    print(f"\n🔍 Verifying and repairing payload indexes for '{collection_name}'...")
+
+    try:
+        collection_info = client.get_collection(collection_name)
+        # print("\n📊 Collection Info:")
+        # print(f"  • Name      : {collection_name}")
+        # print(f"  • Vectors   : {collection_info.points_count}")
+        # print(f"  • Dimension : {collection_info.config.params.vectors.size}")
+        # print(f"  • Distance  : {collection_info.config.params.vectors.distance}")
+        payload_schema = getattr(collection_info.config, "payload_schema", None)
+        existing_indexes = list(payload_schema.keys()) if payload_schema else []
+
+        if existing_indexes:
+            for idx in existing_indexes:
+                print(f"   - {idx}")
+        else:
+            print("   ⚠️ No payload indexes found!")
+
+        for field in ["id", "category"]:
+            if field not in existing_indexes:
+                print(f"🛠️  Creating missing index for '{field}'...")
+                try:
+                    client.create_payload_index(
+                        collection_name=collection_name,
+                        field_name=field,
+                        field_schema="keyword"
+                    )
+                except Exception as e:
+                    print(f"⚠️ Failed to create index '{field}': {e}")
+            else:
+                print(f"✅ Index '{field}' already exists, verifying...")
+
+                try:
+                    _ = client.scroll(
+                        collection_name=collection_name,
+                        limit=1,
+                        filter={
+                            "must": [
+                                {"key": field, "match": {"value": "test"}}
+                            ]
+                        }
+                    )
+                    print(f"   🟢 Index '{field}' is working.")
+                except Exception as e:
+                    if "Index required but not found" in str(e):
+                        print(f"   ⚠️ Index '{field}' seems broken, recreating...")
+                        try:
+                            client.delete_payload_index(collection_name, field)
+                            client.create_payload_index(
+                                collection_name=collection_name,
+                                field_name=field,
+                                field_schema="keyword"
+                            )
+                            print(f"   ✅ Index '{field}' repaired successfully.")
+                        except Exception as fix_err:
+                            print(f"   ❌ Failed to repair index '{field}': {fix_err}")
+                    else:
+                        print(f"   ⚠️ Could not test index '{field}': {e}")
+
+        try:
+            points, _ = client.scroll(collection_name=collection_name, limit=3)
+            if points:
+                print("\n🔎 Sample payloads:")
+                for p in points:
+                    pid = p.payload.get("id", "<no id>")
+                    cat = p.payload.get("category", "<no category>")
+                    print(f"   - ID: {pid}, Category: {cat}")
+            else:
+                print("⚠️ No sample points found.")
+        except Exception as e:
+            print(f"⚠️ Could not fetch sample payloads: {e}")
+
+    except Exception as e:
+        print(f"❌ Failed to verify or repair indexes: {str(e)}")
+
+
+verify_and_fix_indexes(client, collection_name)
+
 # 🔍 Cek info koleksi
 try:
     collection_info = client.get_collection(collection_name)
-    print(f"\n📊 Collection Statistics:")
+    print("\n📊 Collection Statistics:")
     print(f"  - Collection Name: {collection_name}")
     print(f"  - Vector Count: {collection_info.points_count}")
-except Exception as e:
-    print(f"⚠️ Error retrieving collection info: {e}")
 
-    
-    # Handle various vector config structures
+    # Handle struktur vector config yang berbeda
     try:
-        if hasattr(collection_info.config.params.vectors, 'size'):
+        if hasattr(collection_info.config.params.vectors, "size"):
             vector_size = collection_info.config.params.vectors.size
         elif isinstance(collection_info.config.params.vectors, dict):
-            vector_size = collection_info.config.params.vectors.get('size', 'unknown')
+            vector_size = collection_info.config.params.vectors.get("size", "unknown")
+        elif hasattr(collection_info.config.params.vectors, "vectors"):
+            vector_size = getattr(collection_info.config.params.vectors.vectors, "size", "unknown")
         else:
-            vector_size = collection_info.config.params.vectors.vectors.size if hasattr(collection_info.config.params.vectors, 'vectors') else 'unknown'
-        print(f"  - Vector Dimension: {vector_size}")
-    except Exception as e:
-        print("  - Vector Dimension: 1536 (default)")
+            vector_size = "unknown"
+    except Exception:
+        vector_size = 1536
+
+    print(f"  - Vector Dimension: {vector_size}")
 
 except Exception as e:
     print(f"❌ Error creating vector database: {str(e)}")
