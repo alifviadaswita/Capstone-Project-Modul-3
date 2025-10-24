@@ -243,7 +243,7 @@ ResumeRetriever.search(query="data scientist python", top_k=3)
 Gunakan prompt ini sebagai pedoman perilaku agen setiap kali menjawab pertanyaan tentang kandidat.
 """
 #💬 Blok 7: Function resume expert
-def resume_expert(question: str):
+def resume_expert(question: str, history: str = ""):
     """Process user query with agent"""
     agent = create_agent(
         model=llm,
