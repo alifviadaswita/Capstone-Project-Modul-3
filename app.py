@@ -318,10 +318,16 @@ def resume_expert(question: str):
 
 # 🧭 Blok 8: Streamlit UI
 # Header
-st.image("image.png", width=300)
-st.title("🧠 RESUME Recommendation Agent")
-st.markdown("AI-powered resume recommendation using RAG Agent")
-
+st.markdown(
+    """
+    <div style='text-align: center;'>
+        <img src='image.png' width='600' style='margin-bottom: 20px;'>
+        <h1 style='font-size: 40px;'>🧠 RESUME Recommendation Agent</h1>
+        <p style='font-size: 18px; color: gray;'>AI-powered resume recommendation using RAG Agent</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 with st.sidebar:
     st.header("About")
