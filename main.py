@@ -52,20 +52,15 @@ print(f"✅ Cleaned dataset saved to: {output_path}")
 
 
 # 📄 Blok 6: Convert rows into LangChain Documents
-documents = [
-    Document(
-        page_content=f"{row['Resume_str']}\n\nCategory: {row['Category']}",
-        metadata={
+documents = []
+for i, row in data.iterrows():
+    content = f"{row['Resume_str']}\n\nCategory: {row['Category']}"
+    metadata = {
             "id": str(row["ID"]).strip(),
             "category": str(row["Category"]).strip(),
             "html_length": len(str(row.get("Resume_html", "")))
         }
-    )
-    for _, row in data.iterrows()
-]
-
-if not documents:
-    raise ValueError("❌ No documents to index!")
+    documents.append(Document(page_content=content, metadata=metadata))
 
 print(f"🔎 Total documents prepared: {len(documents)}")
 print("📘 Sample document:", documents[0].metadata)
@@ -104,36 +99,33 @@ vector_store = QdrantVectorStore.from_documents(
 print("✅ Documents successfully uploaded to Qdrant!")
 
 # 🧭 Blok 9: Create Payload Index
-for field in ["category", "id"]:
-    try:
-        client.create_payload_index(
-            collection_name=collection_name,
-            field_name=field,
-            field_schema="keyword"
-        )
-        print(f"✅ Index created for field '{field}'")
-    except Exception as e:
-        print(f"⚠️ Could not create index for '{field}': {e}")
-
-
-# 🔍 Cek info koleksi
 try:
-    collection_info = client.get_collection(collection_name)
-    vector_size = getattr(
-        getattr(collection_info.config.params.vectors, "size", None),
-        "size",
-        1536
+    client.create_payload_index(
+        collection_name=collection_name,
+        field_name="category",
+        field_schema="keyword"
     )
+    # print("✅ Index for field 'Category' created successfully.")
+except Exception as e:
+    # print(f"⚠️ Failed to create index for 'Category': {str(e)}")
 
-    print("\n📊 Collection Info:")
-    print(f"  - Name: {collection_name}")
+    # Verify collection info
+    collection_info = client.get_collection(collection_name)
+    print(f"\n📊 Collection Statistics:")
+    print(f"  - Collection Name: {collection_name}")
     print(f"  - Vector Count: {collection_info.points_count}")
-    print(f"  - Vector Dimension: {vector_size}")
 
-    # hits, _ = client.scroll(collection_name=collection_name, limit=3)
-    # print("\n🔎 Sample payloads:")
-    # for point in hits:
-    #     print(f"   - ID: {point.payload.get('id', '<no id>')}, Category: {point.payload.get('category', '<no category>')}")
+    # Handle various vector config structures
+    try:
+        if hasattr(collection_info.config.params.vectors, 'size'):
+            vector_size = collection_info.config.params.vectors.size
+        elif isinstance(collection_info.config.params.vectors, dict):
+            vector_size = collection_info.config.params.vectors.get('size', 'unknown')
+        else:
+            vector_size = collection_info.config.params.vectors.vectors.size if hasattr(collection_info.config.params.vectors, 'vectors') else 'unknown'
+        print(f"  - Vector Dimension: {vector_size}")
+    except Exception as e:
+        print("  - Vector Dimension: 1536 (default)")
 
 except Exception as e:
     print(f"❌ Error creating vector database: {str(e)}")

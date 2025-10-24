@@ -80,7 +80,6 @@ if qdrant is None:
 retriever = qdrant.as_retriever(search_kwargs={"k": 20})
 
 
-
 # 🧩 Blok 5: Define RAG Tools
 # ✅ 1️⃣ Search resumes by query (category / skills / general prompt)
 @tool
@@ -92,35 +91,43 @@ def search_resumes_by_query(query: str, category: str = None, k: int = 10):
     try:
         q = f"{query} in {category}" if category else query
         results = qdrant.similarity_search(query=q, k=k)
-        if not results:
-            return []
-        out = []
-        for d in results:
-            out.append({
-                "ID": d.metadata.get("id"),
-                "Category": d.metadata.get("category"),
-                "Snippet": (d.page_content[:300] + "...") if d.page_content else ""
-            })
-        return out
+
     except Exception as e:
         return {"error": str(e)}
 
+    if not results:
+        return f"Tidak ada data untuk kategori '{category}'."   
+    
+    out = []
+    for doc in results:
+        out.append({
+            "ID": doc.metadata.get("id"),
+            "Category": doc.metadata.get("category"),
+            "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
+        })
+    return out
+
 # ✅ 2️⃣ Recommend similar candidates
 @tool
-def recommend_similar_candidates(profile_summary: str, k: int = 10):
-    """Rekomendasikan kandidat serupa berdasarkan ringkasan profil."""
+def recommend_similar_candidates(query_prompt: str):
+    """Recommend similar candidates based on a query prompt."""
     try:
-        q = f"Profiles similar to: {profile_summary}"
-        results = qdrant.similarity_search(query=q, k=k)
-        if not results:
-            return []
-        return [
-            {"ID": d.metadata.get("id"), "Category": d.metadata.get("category"),
-             "Snippet": (d.page_content[:300] + "...") if d.page_content else ""}
-            for d in results
-        ]
+        results = qdrant.similarity_search(
+            query=f"Similar candidates to {query_prompt}",
+            k=6)
     except Exception as e:
         return {"error": str(e)}
+
+    if not results:
+        return f"Tidak ada kandidat serupa untuk '{query_prompt}'."
+
+    return [
+        {
+            "ID": doc.metadata.get("id"),
+            "Category": doc.metadata.get("Category"),
+            "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
+        } for doc in results
+    ]
 
 
 # ✅ 3️⃣ Get Resume by ID (fixed version)
