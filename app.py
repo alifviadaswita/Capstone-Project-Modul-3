@@ -415,60 +415,74 @@ if prompt := st.chat_input("Ask about resumes, skills, categories, or candidate 
 # ==============================
 # Hasil Analisis Resume
 # ==============================
-st.markdown(
-    "<h3 style='text-align:center; color:#4A90E2;'>📄 Hasil Analisis Resume</h3>",
-    unsafe_allow_html=True,
-)
-
-# 🔹 Ganti variabel sesuai output model
-prediksi_category = "Data Analyst"
-confidence_score = 0.92
-resume_text = "Berpengalaman 3 tahun dalam analisis data menggunakan Python, SQL, dan Power BI..."
-
-# === TAMPILAN UTAMA ===
-st.markdown(f"""
-<div style='background-color:#F8F9FA; padding:20px; border-radius:10px;'>
-    <h5 style='color:#333;'>📌 Ringkasan Resume</h5>
-    <p style='text-align:justify; font-size:14px; color:#555;'>{resume_text[:700]}{'...' if len(resume_text) > 700 else ''}</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Garis pembatas
-st.markdown("---")
-
-# === INFO TAMBAHAN ===
-colA, colB, colC = st.columns(3)
-with colA:
-    st.metric("Kategori Prediksi", prediksi_category)
-with colB:
-    st.metric("Confidence", f"{confidence_score*100:.1f}%")
-with colC:
-    st.metric("Tanggal Analisis", datetime.now().strftime("%d %B %Y"))
-
-# Baris berikutnya
-colX, colY, colZ = st.columns(3)
-with colX:
-    st.metric("Panjang Resume", f"{len(resume_text.split())} kata")
-with colY:
-    st.metric("Model", "Qdrant + OpenAI Embeddings")
-with colZ:
-    st.metric("Status", "✅ Selesai")
-
-# === TOMBOL AKSI ===
-st.markdown("<br>", unsafe_allow_html=True)
-colR, colS = st.columns([1, 1])
-with colR:
-    if st.button("🔁 Analisis Ulang"):
-        st.experimental_rerun()
-with colS:
-    st.download_button(
-        label="📥 Unduh Hasil Analisis",
-        data=f"Kategori: {prediksi_category}\nConfidence: {confidence_score*100:.1f}%\n\nRingkasan:\n{resume_text}",
-        file_name="hasil_analisis_resume.txt",
-        mime="text/plain"
+if "response" in locals() and isinstance(response, dict):
+    st.markdown(
+        """
+        <div style='text-align:center; margin-top:40px;'>
+            <h2 style='color:#4A90E2;'>📄 Hasil Analisis Resume</h2>
+            <p style='color:#666;'>Berikut hasil analisis otomatis dari dokumen yang kamu unggah.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-st.markdown(
-    "<hr><p style='text-align:center; color:gray; font-size:12px;'>Made with ❤️ using Streamlit</p>",
-    unsafe_allow_html=True
-)
+    prediksi_category = response.get("predicted_category", "Tidak diketahui")
+    confidence_score = response.get("confidence_score", 0.0)
+    resume_text = response.get("resume_summary", "Tidak ada ringkasan yang tersedia.")
+
+    # === BOX RINGKASAN ===
+    st.markdown(
+        f"""
+        <div style='
+            background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-top: 20px;
+        '>
+            <h4 style='color:#333; margin-bottom:10px;'>📌 Ringkasan Resume</h4>
+            <p style='text-align:justify; color:#555; font-size:15px; line-height:1.6;'>
+                {resume_text[:700]}{'...' if len(resume_text) > 700 else ''}
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("<hr style='margin:25px 0; border: none; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+
+    colA, colB, colC = st.columns(3)
+    with colA:
+        st.metric("Kategori Prediksi", prediksi_category)
+    with colB:
+        st.metric("Confidence", f"{confidence_score*100:.1f}%")
+    with colC:
+        st.metric("Tanggal Analisis", datetime.now().strftime("%d %B %Y"))
+
+    colX, colY, colZ = st.columns(3)
+    with colX:
+        st.metric("Panjang Resume", f"{len(resume_text.split())} kata")
+    with colY:
+        st.metric("Model", "RAG + Qdrant + GPT-4o Mini")
+    with colZ:
+        st.metric("Status", "✅ Selesai")
+
+    # === TOMBOL AKSI ===
+    st.markdown("<br>", unsafe_allow_html=True)
+    colR, colS = st.columns([1, 1])
+
+    with colR:
+        if st.button("🔁 Analisis Ulang"):
+            st.session_state.messages = []
+            st.rerun()
+
+    with colS:
+        st.download_button(
+            label="📥 Unduh Hasil Analisis",
+            data=f"Kategori: {prediksi_category}\nConfidence: {confidence_score*100:.1f}%\n\nRingkasan:\n{resume_text}",
+            file_name=f"hasil_analisis_{prediksi_category.lower().replace(' ','_')}.txt",
+            mime="text/plain",
+        )
+
+else:
+    st.info("💬 Silakan ajukan pertanyaan atau unggah resume terlebih dahulu untuk melihat hasil analisis.")
