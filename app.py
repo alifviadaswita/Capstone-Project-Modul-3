@@ -10,7 +10,7 @@ from langchain_qdrant import QdrantVectorStore
 from langchain.tools import tool 
 from langchain.agents import create_agent 
 from langchain_core.messages import ToolMessage, HumanMessage  
-from qdrant_client.http import models as rest
+from qdrant_client.http import models
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 import base64
 
@@ -194,32 +194,35 @@ def recommend_similar_candidates(query_prompt: str):
 
 # 6️⃣ Get Resume by ID
 @tool
-def get_resume_by_id(resume_id: str):
+def get_resume_by_id(id: str):
     """Ambil resume lengkap berdasarkan ID kandidat."""
     try:
-        results = qdrant.search(
-            collection_name="resume_documents",
-            query_vector=None, 
-            # query_filter=rest.Filter(
-            #     must=[rest.FieldCondition(
-            #         key="id",
-            #         match=rest.MatchValue(value=str(resume_id))
-            #     )]
-            limit=1
+        results = qdrant.similarity_search_with_score(
+            query="resume",
+            k=3,
+            filter=models.Filter(
+                must=[models.FieldCondition(
+                    key="id",
+                    match=models.MatchValue(value=str(id))
+                )]
+            )
         )
     except Exception as e:
         return {"error": f"Gagal mengambil resume: {str(e)}"}
 
     if not results:
-        return f"Maaf, tidak ditemukan resume dengan ID {resume_id}."
+        return f"Maaf, tidak ditemukan resume dengan ID {id}."
 
-    doc = results[0]
+    doc, score = results[0]
+
     return {
-        "ID": doc.payload.get("id"),
-        "Category": doc.payload.get("category"),
-        "Resume": (doc.payload.get("text") or doc.payload.get("page_content") or "")[:1500] + "...",
+        "ID": doc.metadata.get("id"),
+        "Category": doc.metadata.get("category"),
+        "Resume": (doc.page_content[:1500] + "...") if doc.page_content else "",
+        "RelevanceScore": score
     }
-    
+
+
 tools = [
     search_resumes_by_category,
     search_resumes_by_skills,
