@@ -318,16 +318,22 @@ def resume_expert(question: str):
 
 # 🧭 Blok 8: Streamlit UI
 # Header
-st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-
-st.image("image.png", width=600)
-
 st.markdown(
     """
-    <h1 style='text-align: center; font-size: 40px;'>🧠 RESUME Recommendation Agent</h1>
-    <p style='text-align: center; font-size: 18px; color: gray;'>
-        AI-powered resume recommendation using RAG Agent
-    </p>
+    <div style='
+        background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        margin-bottom: 30px;
+    '>
+        <img src='image.png' style='width:60%; max-width:600px; border-radius:10px; margin-bottom:20px;'>
+        <h1 style='font-size: 42px; margin-bottom: 10px;'>🧠 RESUME Recommendation Agent</h1>
+        <p style='font-size: 18px; color: #555;'>
+            AI-powered resume recommendation using <b>RAG Agent</b>
+        </p>
+    </div>
     """,
     unsafe_allow_html=True
 )
