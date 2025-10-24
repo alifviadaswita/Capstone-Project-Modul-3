@@ -121,20 +121,27 @@ vector_store = QdrantVectorStore.from_documents(
 print("✅ Documents successfully uploaded to Qdrant!")
 
 # 🧭 Blok 9: Create Payload Index
+for field in ["category", "id"]:
+    try:
+        client.create_payload_index(
+            collection_name=collection_name,
+            field_name=field,
+            field_schema="keyword"
+        )
+        print(f"✅ Index created for field '{field}'")
+    except Exception as e:
+        print(f"⚠️ Could not create index for '{field}': {e}")
+
+# 🔍 Cek info koleksi
 try:
-    client.create_payload_index(
-        collection_name=collection_name,
-        field_name="category",
-        field_schema="keyword"
-    )
-except Exception as e:
-    
-    # Verify collection info
     collection_info = client.get_collection(collection_name)
     print(f"\n📊 Collection Statistics:")
     print(f"  - Collection Name: {collection_name}")
     print(f"  - Vector Count: {collection_info.points_count}")
+except Exception as e:
+    print(f"⚠️ Error retrieving collection info: {e}")
 
+    
     # Handle various vector config structures
     try:
         if hasattr(collection_info.config.params.vectors, 'size'):

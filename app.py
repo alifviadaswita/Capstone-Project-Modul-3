@@ -11,6 +11,7 @@ from langchain.tools import tool
 from langchain.agents import create_agent 
 from langchain_core.messages import ToolMessage, HumanMessage  
 from qdrant_client.http import models
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 import base64
 
 
@@ -193,12 +194,37 @@ def recommend_similar_candidates(query_prompt: str):
         } for doc in results
     ]
 
+# 6️⃣ Get Resume by ID
+@tool
+def get_resume_by_id(candidate_id: str):
+    """Ambil resume lengkap berdasarkan ID kandidat (exact match)."""
+    try:
+        scroll = qdrant.client.scroll(
+            # collection_name="resumes",
+            scroll_filter=Filter(
+                must=[FieldCondition(key="id", match=MatchValue(value=candidate_id))]
+            ),
+            limit=1
+        )
+        points, _ = scroll
+        if not points:
+            return f"Tidak ditemukan kandidat dengan ID {candidate_id}."
+        p = points[0]
+        return {
+            "ID": p.payload.get("id"),
+            "Category": p.payload.get("category"),
+            "Resume": p.payload.get("text") or p.payload.get("resume") or ""
+        }
+    except Exception as e:
+        return {"error": str(e)}
+    
 tools = [
     search_resumes_by_category,
     search_resumes_by_skills,
     search_resumes_by_category_and_query,
     get_resume_by_prompt,
-    recommend_similar_candidates
+    recommend_similar_candidates,
+    get_resume_by_id
 ]
 
 # 🧠 Blok 6: 🧩 AGENT CREATION
