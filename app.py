@@ -125,25 +125,24 @@ def recommend_similar_candidates(profile_summary: str, k: int = 10):
 
 # ✅ 3️⃣ Get Resume by ID (fixed version)
 def get_resume_by_id(id: str):
-    """Ambil resume berdasarkan ID."""
+    """Ambil resume berdasarkan ID melalui LangChain vectorstore."""
     try:
-        scroll_results, _ = qdrant.scroll(
-            limit=1,
-            filter=models.Filter(
-                must=[models.FieldCondition(key="id", match=models.MatchValue(value=str(id)))]
-            )
+        docs = qdrant.similarity_search(
+            query=" ",  
+            k=1,
+            filter={"id": str(id)}
         )
-        if not scroll_results:
+        if not docs:
             return {}
-        point = scroll_results[0]
-        # prefer payload page_content if stored; fallback to payload fields
-        resume_text = point.payload.get("page_content") or point.payload.get("Resume_str") or ""
+
+        doc = docs[0]
         return {
-            "ID": point.payload.get("id"),
-            "Category": point.payload.get("category"),
-            "Resume": (resume_text[:1500] + "...") if resume_text else "",
+            "ID": doc.metadata.get("id"),
+            "Category": doc.metadata.get("category"),
+            "Resume": (doc.page_content[:1500] + "..."),
             "RelevanceScore": 1.0
         }
+
     except Exception as e:
         return {"error": str(e)}
 
