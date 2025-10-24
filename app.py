@@ -380,6 +380,10 @@ if prompt := st.chat_input("Ask about resumes, skills, categories, or candidate 
         st.markdown(response["answer"])
     st.session_state.messages.append({"role": "AI", "content": response["answer"]})
 
+    with st.expander("History Chat"):
+        for chat in st.session_state.messages:
+            st.markdown(f"**{chat['role']}** : {chat['content']}")
+
     col1, col2, col3 = st.columns(3)
 
     with col1:
