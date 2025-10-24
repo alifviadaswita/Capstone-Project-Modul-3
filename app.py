@@ -415,53 +415,46 @@ if prompt := st.chat_input("Ask about resumes, skills, categories, or candidate 
 # ==============================
 # Hasil Analisis Resume
 # ==============================
-st.markdown("---")
 st.markdown(
     "<h3 style='text-align:center; color:#4A90E2;'>📄 Hasil Analisis Resume</h3>",
     unsafe_allow_html=True,
 )
 
-# 🔹 Ganti variabel ini sesuai output model kamu
+# 🔹 Ganti variabel sesuai output model
 prediksi_category = "Data Analyst"
 confidence_score = 0.92
 resume_text = "Berpengalaman 3 tahun dalam analisis data menggunakan Python, SQL, dan Power BI..."
 
-# === Tampilan Hasil ===
-with st.container():
-    col1, col2 = st.columns([1, 2])
+# === TAMPILAN UTAMA ===
+st.markdown(f"""
+<div style='background-color:#F8F9FA; padding:20px; border-radius:10px;'>
+    <h5 style='color:#333;'>📌 Ringkasan Resume</h5>
+    <p style='text-align:justify; font-size:14px; color:#555;'>{resume_text[:700]}{'...' if len(resume_text) > 700 else ''}</p>
+</div>
+""", unsafe_allow_html=True)
 
-    with col1:
-        st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=120)
-        st.markdown(f"""
-        <div style='text-align:center;'>
-            <h4 style='margin-bottom:0; color:#2E86C1;'>{prediksi_category}</h4>
-            <p style='font-size:13px; color:gray;'>Kategori Prediksi</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Confidence Bar
-        st.progress(float(confidence_score))
-        st.caption(f"Confidence: {confidence_score*100:.1f}%")
-
-    with col2:
-        st.markdown(f"""
-        <div style='background-color:#F8F9FA; padding:15px; border-radius:10px;'>
-            <h5 style='color:#333;'>📌 Ringkasan Resume</h5>
-            <p style='text-align:justify; font-size:14px; color:#555;'>{resume_text[:700]}{'...' if len(resume_text) > 700 else ''}</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-# === Info tambahan ===
+# Garis pembatas
 st.markdown("---")
+
+# === INFO TAMBAHAN ===
 colA, colB, colC = st.columns(3)
 with colA:
-    st.metric("Tanggal Analisis", datetime.now().strftime("%d %B %Y"))
+    st.metric("Kategori Prediksi", prediksi_category)
 with colB:
-    st.metric("Panjang Resume", f"{len(resume_text.split())} kata")
+    st.metric("Confidence", f"{confidence_score*100:.1f}%")
 with colC:
-    st.metric("Model", "Qdrant + OpenAI Embeddings")
+    st.metric("Tanggal Analisis", datetime.now().strftime("%d %B %Y"))
 
-# === Tombol aksi ===
+# Baris berikutnya
+colX, colY, colZ = st.columns(3)
+with colX:
+    st.metric("Panjang Resume", f"{len(resume_text.split())} kata")
+with colY:
+    st.metric("Model", "Qdrant + OpenAI Embeddings")
+with colZ:
+    st.metric("Status", "✅ Selesai")
+
+# === TOMBOL AKSI ===
 st.markdown("<br>", unsafe_allow_html=True)
 colR, colS = st.columns([1, 1])
 with colR:
