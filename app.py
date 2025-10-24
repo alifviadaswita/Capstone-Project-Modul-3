@@ -198,7 +198,7 @@ def get_resume_by_id(resume_id: str):
     """Ambil resume lengkap berdasarkan ID kandidat."""
     try:
         results = qdrant.search(
-            # collection_name="resume_documents",
+            collection_name="resume_documents",
             query_vector=None, 
             query_filter=rest.Filter(
                 must=[rest.FieldCondition(
