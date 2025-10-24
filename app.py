@@ -318,7 +318,7 @@ def resume_expert(question: str):
 
 # 🧭 Blok 8: Streamlit UI
 # Header
-st.image("image.png", use_column_width=True)
+st.image("image.png", width=300)
 st.title("🧠 RESUME Recommendation Agent")
 st.markdown("AI-powered resume recommendation using RAG Agent")
 
