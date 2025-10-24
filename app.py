@@ -11,6 +11,8 @@ from langchain.tools import tool
 from langchain.agents import create_agent 
 from langchain_core.messages import ToolMessage, HumanMessage  
 from qdrant_client.http import models
+import base64
+
 
 
 st.set_page_config(
@@ -318,8 +320,17 @@ def resume_expert(question: str):
 
 # 🧭 Blok 8: Streamlit UI
 # Header
+def get_base64_image(image_path):
+    with open(image_path, "rb") as img_file:
+        data = base64.b64encode(img_file.read()).decode()
+    return f"data:image/png;base64,{data}"
+
+# Ganti 'image.png' sesuai nama file kamu
+img_base64 = get_base64_image("image.png")
+
+# Header banner
 st.markdown(
-    """
+    f"""
     <div style='
         background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
         padding: 30px;
@@ -328,7 +339,7 @@ st.markdown(
         text-align: center;
         margin-bottom: 30px;
     '>
-        <img src='image.png' style='width:60%; max-width:600px; border-radius:10px; margin-bottom:20px;'>
+        <img src="{img_base64}" style='width:60%; max-width:600px; border-radius:10px; margin-bottom:20px;'>
         <h1 style='font-size: 42px; margin-bottom: 10px;'>🧠 RESUME Recommendation Agent</h1>
         <p style='font-size: 18px; color: #555;'>
             AI-powered resume recommendation using <b>RAG Agent</b>
@@ -337,7 +348,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
 with st.sidebar:
     st.header("About")
     st.info("""
