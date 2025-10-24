@@ -159,27 +159,6 @@ def recommend_similar_candidates(reference_query: str):
         return {"error": str(e)}
 
 
-# 6️⃣ Get Resume by ID
-# @tool
-# def get_resume_by_id(id: str):
-#     """🆔 Ambil resume berdasarkan ID unik."""
-#     try:
-#         # Ambil semua dokumen lalu filter manual karena Qdrant filter.id tidak valid
-#         results = qdrant.similarity_search(query=" ", k=50)
-#         match = next((doc for doc in results if str(doc.metadata.get("id")) == str(id)), None)
-
-#         if not match:
-#             return f"Tidak ditemukan resume dengan ID '{id}'."
-
-#         return {
-#             "ID": match.metadata.get("id"),
-#             "Category": match.metadata.get("category"),
-#             "Snippet": (match.page_content[:500] + "...") if match.page_content else ""
-#         }
-#     except Exception as e:
-#         return {"error": str(e)}
-
-
 # Daftar semua tools untuk agent
 tools = [
     search_resumes_by_category,
