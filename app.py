@@ -249,15 +249,29 @@ def resume_expert(question: str):
         system_prompt=create_agent_prompt()
     )
 
+    prompt_with_context = f"""
+    This is the previous chat history:
+    {history}
+
+    Now, answer this new question:
+    {question}
+    """
+
     try:
-        result = agent.invoke({"messages": [HumanMessage(content=question)]})
+        result = agent.invoke({"messages": [HumanMessage(content=prompt_with_context)]})
+
+        # Ambil pesan hasil agent
         messages = result.get("messages", []) if isinstance(result, dict) else getattr(result, "messages", [])
+        messages_history = st.session_state.get("messages", [])[-20:]
+        history = "\n".join([f'{msg["role"]}: {msg["content"]}' for msg in messages_history]) or " "
+
+        # Ambil hasil jawaban
         if not messages:
             answer_text = str(result)
         else:
             answer_text = messages[-1].content
 
-        # Calculate token usage 
+        # Hitung token usage
         total_input_tokens = 0
         total_output_tokens = 0
         for message in messages:
@@ -272,13 +286,12 @@ def resume_expert(question: str):
                     total_input_tokens += tu.get("prompt_tokens", 0)
                     total_output_tokens += tu.get("completion_tokens", 0)
 
+        # Estimasi biaya
         usd_price = (total_input_tokens * 0.15 + total_output_tokens * 0.6) / 1_000_000
         idr_price = usd_price * 17_000
 
-        tool_messages = []
-        for message in messages:
-            if isinstance(message, ToolMessage):
-                tool_messages.append(message.content)
+        # Ambil tool message (jika ada)
+        tool_messages = [m.content for m in messages if isinstance(m, ToolMessage)]
 
         return {
             "answer": answer_text,
@@ -287,8 +300,10 @@ def resume_expert(question: str):
             "total_input_tokens": total_input_tokens,
             "total_output_tokens": total_output_tokens,
             "tool_messages": tool_messages,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "history": history
         }
+
     except Exception as e:
         return {
             "answer": f"Error: {str(e)}",
@@ -297,12 +312,16 @@ def resume_expert(question: str):
             "total_input_tokens": 0,
             "total_output_tokens": 0,
             "tool_messages": [],
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "history": history
         }
 
 # 🧭 Blok 8: Streamlit UI
+# Header
+st.image("image.png", use_column_width=True)
 st.title("🧠 RESUME Recommendation Agent")
 st.markdown("AI-powered resume recommendation using RAG Agent")
+
 
 with st.sidebar:
     st.header("About")
@@ -328,9 +347,11 @@ if prompt := st.chat_input("Ask about resumes, skills, categories, or candidate 
         st.markdown(prompt)
     st.session_state.messages.append({"role": "Human", "content": prompt})
 
+    history = "\n".join([f'{msg["role"]}: {msg["content"]}' for msg in st.session_state.messages])
+
     with st.chat_message("AI"):
         with st.spinner("Processing..."):
-            response = resume_expert(prompt)
+            response = resume_expert(prompt,history)
         st.markdown(response["answer"])
     st.session_state.messages.append({"role": "AI", "content": response["answer"]})
 
