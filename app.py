@@ -79,45 +79,83 @@ if qdrant is None:
 
 retriever = qdrant.as_retriever(search_kwargs={"k": 20})
 
+def _clean_category(value: str) -> str:
+    if value is None:
+        return ""
+    return str(value).strip().lower()
 
 # 🧩 Blok 5: Define RAG Tools
-# ✅ 1️⃣ Search resumes by query (category / skills / general prompt)
+# 1️⃣ Searh resume by Category
 @tool
-def search_resumes_by_query(query: str, skills: str = None, category: str = None, k: int = 10):
-    """
-    Cari resume berdasarkan query. Jika category diberikan, filter dengan menambahkan kata kunci.
-    Return: list of dict atau dict {"error": "..."}
-    """
+def search_resumes_by_category(category: str):
+    """Search resumes by Category (e.g., HR, Finance, IT)."""
     try:
-        search_text = query.strip()
-        if skills:
-            search_text += f" {skills.strip()}"
-        if category:
-            search_text += f" in {category.strip()}"
-
-        if not search_text:
-            return {"error": "Query tidak boleh kosong."}
-
-        results = qdrant.similarity_search_with_score(search_text, k=k)
-
-        if not results:
-            return f"Tidak ada hasil ditemukan untuk '{search_text}'."
-
-        output = []
-        for doc, score in results:
-            output.append({
-                "ID": doc.metadata.get("id", "-"),
-                "Category": doc.metadata.get("category", "Tidak diketahui"),
-                "Snippet": (doc.page_content[:350] + "...") if doc.page_content else "(Tidak ada konten)",
-                "RelevanceScore": round(float(score), 4)
-            })
-
-        return output
-
+        cat = _clean_category(category)
+        results = qdrant.similarity_search(
+            query=cat,
+            k=5
+        )
     except Exception as e:
-        return {"error": f"Terjadi kesalahan: {str(e)}"}
+        return {"error": str(e)}
 
-# ✅ 2️⃣ Recommend similar candidates
+    if not results:
+        return f"Tidak ada data untuk kategori '{category}'."   
+    
+    out = []
+    for doc in results:
+        out.append({
+            "ID": doc.metadata.get("id"),
+            "Category": doc.metadata.get("category"),
+            "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
+        })
+    return out
+
+# 2️⃣ Search Resumes by Skills
+@tool
+def search_resumes_by_skills(skills: str):
+    """Search resumes by free-text query (skills, keywords)."""
+    try:
+        query = f"Candidates skilled in {skills}"
+        results = qdrant.similarity_search(
+            query=query, 
+            k=5)
+    except Exception as e:
+        return {"error": str(e)}
+
+    if not results:
+        return f"Tidak ditemukan kandidat dengan keterampilan '{skills}'."
+
+    return [
+        {
+            "ID": doc.metadata.get("id"),
+            "Category": doc.metadata.get("Category"),
+            "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
+        } for doc in results
+    ]
+
+
+# 3️⃣ Search Resumes by Prompt
+@tool
+def get_resume_by_prompt(query_prompt: str):
+    """Get the most relevant resume for a given query prompt."""
+    try:
+        results = qdrant.similarity_search(
+            query=f"Resume about {query_prompt}", 
+            k=1)
+    except Exception as e:
+        return {"error": str(e)}
+
+    if not results:
+        return f"Tidak ditemukan resume relevan dengan '{query_prompt}'."
+
+    doc = results[0]
+    return {
+        "ID": doc.metadata.get("id"),
+        "Category": doc.metadata.get("Category"),
+        "Resume": (doc.page_content[:1000] + "...") if doc.page_content else ""
+    }
+
+# 4️⃣ Search Recommed Similar Candidates
 @tool
 def recommend_similar_candidates(query_prompt: str):
     """Recommend similar candidates based on a query prompt."""
@@ -140,7 +178,8 @@ def recommend_similar_candidates(query_prompt: str):
     ]
 
 
-# ✅ 3️⃣ Get Resume by ID (fixed version)
+
+# ✅ 5️⃣ Get Resume by ID (fixed version)
 def get_resume_by_id(id: str):
     """Ambil resume berdasarkan ID melalui LangChain vectorstore."""
     try:
@@ -163,7 +202,9 @@ def get_resume_by_id(id: str):
         return {"error": str(e)}
 
 tools = [
-    search_resumes_by_query,
+    search_resumes_by_category,
+    search_resumes_by_skills,
+    get_resume_by_prompt,
     recommend_similar_candidates,
     get_resume_by_id
 ]
