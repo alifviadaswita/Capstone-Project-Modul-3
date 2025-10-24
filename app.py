@@ -85,128 +85,6 @@ def _clean_category(value: str) -> str:
     return str(value).strip().lower()
 
 # 🧩 Blok 5: Define RAG Tools
-# # 1️⃣ Searh resume by Category
-# @tool
-# def search_resumes_by_category(category: str):
-#     """Search resumes by Category (e.g., HR, Finance, IT)."""
-#     try:
-#         cat = _clean_category(category)
-#         results = qdrant.similarity_search(
-#             query=cat,
-#             k=5
-#         )
-#     except Exception as e:
-#         return {"error": str(e)}
-
-#     if not results:
-#         return f"Tidak ada data untuk kategori '{category}'."   
-    
-#     out = []
-#     for doc in results:
-#         out.append({
-#             "ID": doc.metadata.get("id"),
-#             "Category": doc.metadata.get("category"),
-#             "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
-#         })
-#     return out
-
-# # 2️⃣ Search Resumes by Skills
-# @tool
-# def search_resumes_by_skills(skills: str):
-#     """Search resumes by free-text query (skills, keywords)."""
-#     try:
-#         query = f"Candidates skilled in {skills}"
-#         results = qdrant.similarity_search(
-#             query=query, 
-#             k=5)
-#     except Exception as e:
-#         return {"error": str(e)}
-
-#     if not results:
-#         return f"Tidak ditemukan kandidat dengan keterampilan '{skills}'."
-
-#     return [
-#         {
-#             "ID": doc.metadata.get("id"),
-#             "Category": doc.metadata.get("Category"),
-#             "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
-#         } for doc in results
-#     ]
-
-
-# # 3️⃣ Search Resumes by Prompt
-# @tool
-# def get_resume_by_prompt(query_prompt: str):
-#     """Get the most relevant resume for a given query prompt."""
-#     try:
-#         results = qdrant.similarity_search(
-#             query=f"Resume about {query_prompt}", 
-#             k=1)
-#     except Exception as e:
-#         return {"error": str(e)}
-
-#     if not results:
-#         return f"Tidak ditemukan resume relevan dengan '{query_prompt}'."
-
-#     doc = results[0]
-#     return {
-#         "ID": doc.metadata.get("id"),
-#         "Category": doc.metadata.get("Category"),
-#         "Resume": (doc.page_content[:1000] + "...") if doc.page_content else ""
-#     }
-
-# # 4️⃣ Search Recommed Similar Candidates
-# @tool
-# def recommend_similar_candidates(query_prompt: str):
-#     """Recommend similar candidates based on a query prompt."""
-#     try:
-#         results = qdrant.similarity_search(
-#             query=f"Similar candidates to {query_prompt}",
-#             k=6)
-#     except Exception as e:
-#         return {"error": str(e)}
-
-#     if not results:
-#         return f"Tidak ada kandidat serupa untuk '{query_prompt}'."
-
-#     return [
-#         {
-#             "ID": doc.metadata.get("id"),
-#             "Category": doc.metadata.get("Category"),
-#             "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
-#         } for doc in results
-#     ]
-
-# # ✅ 5️⃣ Get Resume by ID (fixed version)
-# @tool
-# def get_resume_by_id(id: str):
-#     """Ambil resume berdasarkan ID melalui LangChain vectorstore."""
-#     try:
-#         docs = qdrant.similarity_search(
-#             query=" ",  
-#             k=1,
-#             filter={"id": str(id)}
-#         )
-#         if not docs:
-#             return {}
-
-#         doc = docs[0]
-#         return {
-#             "ID": doc.metadata.get("id"),
-#             "Category": doc.metadata.get("category"),
-#             "Snippet": (doc.page_content[:300] + "...") if doc.page_content else ""
-#         }
-
-#     except Exception as e:
-#         return {"error": str(e)}
-
-# tools = [
-#     search_resumes_by_category,
-#     search_resumes_by_skills,
-#     get_resume_by_prompt,
-#     recommend_similar_candidates,
-#     get_resume_by_id
-# ]
 def _build_response(results, message_if_empty):
     """Helper: ubah hasil search jadi format rapi"""
     if not results:
@@ -281,25 +159,25 @@ def recommend_similar_candidates(reference_query: str):
         return {"error": str(e)}
 
 
-# 6️⃣ Get Resume by ID (tanpa error filter.id)
-@tool
-def get_resume_by_id(id: str):
-    """🆔 Ambil resume berdasarkan ID unik."""
-    try:
-        # Ambil semua dokumen lalu filter manual karena Qdrant filter.id tidak valid
-        results = qdrant.similarity_search(query=" ", k=50)
-        match = next((doc for doc in results if str(doc.metadata.get("id")) == str(id)), None)
+# 6️⃣ Get Resume by ID
+# @tool
+# def get_resume_by_id(id: str):
+#     """🆔 Ambil resume berdasarkan ID unik."""
+#     try:
+#         # Ambil semua dokumen lalu filter manual karena Qdrant filter.id tidak valid
+#         results = qdrant.similarity_search(query=" ", k=50)
+#         match = next((doc for doc in results if str(doc.metadata.get("id")) == str(id)), None)
 
-        if not match:
-            return f"Tidak ditemukan resume dengan ID '{id}'."
+#         if not match:
+#             return f"Tidak ditemukan resume dengan ID '{id}'."
 
-        return {
-            "ID": match.metadata.get("id"),
-            "Category": match.metadata.get("category"),
-            "Snippet": (match.page_content[:500] + "...") if match.page_content else ""
-        }
-    except Exception as e:
-        return {"error": str(e)}
+#         return {
+#             "ID": match.metadata.get("id"),
+#             "Category": match.metadata.get("category"),
+#             "Snippet": (match.page_content[:500] + "...") if match.page_content else ""
+#         }
+#     except Exception as e:
+#         return {"error": str(e)}
 
 
 # Daftar semua tools untuk agent
@@ -308,9 +186,10 @@ tools = [
     search_resumes_by_skills,
     search_resumes_by_experience,
     get_resume_by_prompt,
-    recommend_similar_candidates,
-    get_resume_by_id
+    recommend_similar_candidates
+    # get_resume_by_id
 ]
+
 # 🧠 Blok 6: 🧩 AGENT CREATION
 def create_agent_prompt():
     return """
@@ -359,6 +238,7 @@ Instruksi teknis tambahan untuk integrasi agen:
 
 Gunakan prompt ini sebagai pedoman perilaku agen setiap kali menjawab pertanyaan tentang kandidat.
 """
+
 #💬 Blok 7: Function resume expert
 def resume_expert(question: str, history: str = ""):
     """Process user query with agent"""
@@ -376,13 +256,11 @@ def resume_expert(question: str, history: str = ""):
         messages_history = st.session_state.get("messages", [])[-20:]
         history = "\n".join([f'{msg["role"]}: {msg["content"]}' for msg in messages_history]) or " "
 
-        # Ambil hasil jawaban
         if not messages:
             answer_text = str(result)
         else:
             answer_text = messages[-1].content
 
-        # Hitung token usage
         total_input_tokens = 0
         total_output_tokens = 0
         for message in messages:
@@ -397,11 +275,9 @@ def resume_expert(question: str, history: str = ""):
                     total_input_tokens += tu.get("prompt_tokens", 0)
                     total_output_tokens += tu.get("completion_tokens", 0)
 
-        # Estimasi biaya
         usd_price = (total_input_tokens * 0.15 + total_output_tokens * 0.6) / 1_000_000
         idr_price = usd_price * 17_000
 
-        # Ambil tool message (jika ada)
         tool_messages = [m.content for m in messages if isinstance(m, ToolMessage)]
 
         return {
@@ -434,7 +310,6 @@ def get_base64_image(image_path):
         data = base64.b64encode(img_file.read()).decode()
     return f"data:image/png;base64,{data}"
 
-# Ganti 'image.png' sesuai nama file kamu
 img_base64 = get_base64_image("image.png")
 
 st.markdown(
@@ -515,9 +390,8 @@ with st.sidebar:
         st.rerun()
         
     st.success("✅ Connected to Qdrant Cloud")
-# ==============================
+
 # Initialize session
-# ==============================
 if "agent" not in st.session_state:
     st.session_state.agent = None
     st.session_state.messages = []
@@ -526,9 +400,7 @@ if "agent" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ==============================
 # Chat Display
-# ==============================
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
