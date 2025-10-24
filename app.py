@@ -213,7 +213,7 @@ def resume_expert(question: str, history: str = ""):
     prompt = f"{history}\nUser: {question}"
 
     try:
-        result = agent.invoke({"messages": [HumanMessage(content=prompt)]})
+        result = agent.invoke({"messages": [HumanMessage(content=prompt)]}, config={"verbose": True})
         messages = result.get("messages", []) if isinstance(result, dict) else getattr(result, "messages", [])
         messages_history = st.session_state.get("messages", [])[-20:]
         history = "\n".join([f'{msg["role"]}: {msg["content"]}' for msg in messages_history]) or " "
