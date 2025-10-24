@@ -10,11 +10,9 @@ from langchain_qdrant import QdrantVectorStore
 from langchain.tools import tool 
 from langchain.agents import create_agent 
 from langchain_core.messages import ToolMessage, HumanMessage  
-from qdrant_client.http import models
+from qdrant_client.http import models as rest
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 import base64
-
-
 
 st.set_page_config(
     page_title="RESUME Assistant",
@@ -196,27 +194,32 @@ def recommend_similar_candidates(query_prompt: str):
 
 # 6️⃣ Get Resume by ID
 @tool
-def get_resume_by_id(candidate_id: str):
-    """Ambil resume lengkap berdasarkan ID kandidat (exact match)."""
+def get_resume_by_id(resume_id: str):
+    """Ambil resume lengkap berdasarkan ID kandidat."""
     try:
-        scroll = qdrant.client.scroll(
-            # collection_name="resumes",
-            scroll_filter=Filter(
-                must=[FieldCondition(key="id", match=MatchValue(value=candidate_id))]
+        results = qdrant.search(
+            # collection_name="resume_documents",
+            query_vector=None, 
+            query_filter=rest.Filter(
+                must=[rest.FieldCondition(
+                    key="id",
+                    match=rest.MatchValue(value=str(resume_id))
+                )]
             ),
             limit=1
         )
-        points, _ = scroll
-        if not points:
-            return f"Tidak ditemukan kandidat dengan ID {candidate_id}."
-        p = points[0]
-        return {
-            "ID": p.payload.get("id"),
-            "Category": p.payload.get("category"),
-            "Resume": p.payload.get("text") or p.payload.get("resume") or ""
-        }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Gagal mengambil resume: {str(e)}"}
+
+    if not results:
+        return f"Maaf, tidak ditemukan resume dengan ID {resume_id}."
+
+    doc = results[0]
+    return {
+        "ID": doc.payload.get("id"),
+        "Category": doc.payload.get("category"),
+        "Resume": (doc.payload.get("text") or doc.payload.get("page_content") or "")[:1500] + "...",
+    }
     
 tools = [
     search_resumes_by_category,
