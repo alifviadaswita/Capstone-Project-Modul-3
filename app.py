@@ -200,12 +200,11 @@ def get_resume_by_id(resume_id: str):
         results = qdrant.search(
             collection_name="resume_documents",
             query_vector=None, 
-            query_filter=rest.Filter(
-                must=[rest.FieldCondition(
-                    key="id",
-                    match=rest.MatchValue(value=str(resume_id))
-                )]
-            ),
+            # query_filter=rest.Filter(
+            #     must=[rest.FieldCondition(
+            #         key="id",
+            #         match=rest.MatchValue(value=str(resume_id))
+            #     )]
             limit=1
         )
     except Exception as e:
