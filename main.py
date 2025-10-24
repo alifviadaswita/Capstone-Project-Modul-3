@@ -105,17 +105,14 @@ try:
         field_name="category",
         field_schema="keyword"
     )
-    # print("✅ Index for field 'Category' created successfully.")
-except Exception as e:
-    # print(f"⚠️ Failed to create index for 'Category': {str(e)}")
 
-    # Verify collection info
+except Exception as e:
+
     collection_info = client.get_collection(collection_name)
     print(f"\n📊 Collection Statistics:")
     print(f"  - Collection Name: {collection_name}")
     print(f"  - Vector Count: {collection_info.points_count}")
 
-    # Handle various vector config structures
     try:
         if hasattr(collection_info.config.params.vectors, 'size'):
             vector_size = collection_info.config.params.vectors.size
